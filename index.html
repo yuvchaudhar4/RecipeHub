@@ -1,0 +1,434 @@
+<title>RecipeHub</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=DM+Sans:wght@400;500;700&display=swap">
+<style>
+/* Layout: top bar with role switch, tab row, then a single content column (cards for users, tables and charts for admin) */
+:root{
+  --bg:#F1F5F2;--surface:#FFFFFF;--ink:#14231F;--muted:#5A6B65;--line:#D8E1DC;
+  --accent:#1E7A57;--accent-ink:#FFFFFF;--accent-soft:#DDEFE6;--star:#C98A00;
+  --bad:#B93A2B;--bad-soft:#F8E1DD;--warn:#8A5A00;--warn-soft:#FBEFCB;
+  --font-display:"Bricolage Grotesque","Trebuchet MS",system-ui,sans-serif;
+  --font-body:"DM Sans",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0F1A17;--surface:#16251F;--ink:#E7F0EB;--muted:#98ABA3;--line:#2A3D35;
+  --accent:#4FC596;--accent-ink:#0B1712;--accent-soft:#1D3A2E;--star:#F0B429;
+  --bad:#F08A7A;--bad-soft:#3A1E1A;--warn:#E8B84A;--warn-soft:#3A2F12;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F1A17;--surface:#16251F;--ink:#E7F0EB;--muted:#98ABA3;--line:#2A3D35;
+  --accent:#4FC596;--accent-ink:#0B1712;--accent-soft:#1D3A2E;--star:#F0B429;
+  --bad:#F08A7A;--bad-soft:#3A1E1A;--warn:#E8B84A;--warn-soft:#3A2F12;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.5}
+.wrap{max-width:1120px;margin:0 auto;padding-block:16px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--font-display);line-height:1.15;margin:0;text-wrap:balance}
+h2{font-size:1.5rem}h3{font-size:1.1rem}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.top{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;padding-bottom:14px}
+.brand{font-family:var(--font-display);font-weight:700;font-size:1.5rem;letter-spacing:-.02em}
+.brand span{color:var(--accent)}
+.who{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface)}
+.seg button{border:0;background:none;padding:8px 14px;font-weight:500}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+select,input[type=text],input[type=email],textarea{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:9px 11px;width:100%}
+select{width:auto;max-width:100%}
+textarea{min-height:120px;resize:vertical}
+label{display:block;font-weight:500;font-size:.88rem;margin-bottom:5px}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);overflow-x:auto;margin-bottom:20px}
+.tabs button{border:0;background:none;padding:10px 14px;font-weight:500;color:var(--muted);border-bottom:3px solid transparent;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 14px;font-weight:500}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.danger{color:var(--bad);border-color:var(--bad)}
+.btn.sm{padding:5px 10px;font-size:.84rem}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.row.between{justify-content:space-between}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:16px}
+.bar .grow{flex:1 1 220px;min-width:0}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 12px;font-size:.86rem}
+.chip[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--ink);font-weight:700}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;text-align:left;padding:0;min-width:0}
+button.card:hover{border-color:var(--accent)}
+.ph,.card img.photo{width:100%;aspect-ratio:16/10;object-fit:cover;display:block}
+.ph{display:flex;align-items:flex-end;padding:12px;font-family:var(--font-display);font-size:2.4rem;font-weight:700;color:rgba(255,255,255,.92)}
+.card .body{padding:12px 14px 14px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.meta{color:var(--muted);font-size:.86rem}
+.stars{color:var(--star);letter-spacing:1px}
+.pill{display:inline-block;border-radius:999px;padding:2px 10px;font-size:.78rem;font-weight:700}
+.pill.approved{background:var(--accent-soft);color:var(--accent)}
+.pill.pending{background:var(--warn-soft);color:var(--warn)}
+.pill.rejected{background:var(--bad-soft);color:var(--bad)}
+.pill.admin{background:var(--accent-soft);color:var(--accent)}
+.pill.user{background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;min-width:0}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.stat b{display:block;font-family:var(--font-display);font-size:1.8rem;font-variant-numeric:tabular-nums}
+.stat span{color:var(--muted);font-size:.84rem}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:620px}
+th,td{text-align:left;padding:10px 10px;border-bottom:1px solid var(--line);vertical-align:middle;font-variant-numeric:tabular-nums}
+th{font-size:.76rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+td.act{white-space:nowrap}td.act .btn{margin-right:4px}
+.form{display:grid;gap:14px;max-width:640px}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.hint{color:var(--muted);font-size:.82rem;margin-top:4px}
+.err{color:var(--bad);font-size:.86rem;min-height:1.2em}
+.check{display:flex;gap:10px;align-items:flex-start}
+.check input{width:auto;margin-top:4px}
+.check label{margin:0}
+.feed{list-style:none;margin:0;padding:0;display:grid;gap:0}
+.feed li{display:flex;gap:10px;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line)}
+.feed time{color:var(--muted);font-size:.8rem;white-space:nowrap}
+.live{display:inline-flex;align-items:center;gap:6px;font-size:.8rem;color:var(--accent);font-weight:700}
+.live i{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:pulse 1.6s infinite}
+@keyframes pulse{50%{opacity:.25}}
+@media (prefers-reduced-motion:reduce){.live i{animation:none}}
+.modal{position:fixed;inset:0;background:rgba(10,20,16,.6);display:flex;align-items:flex-start;justify-content:center;padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));overflow-y:auto;z-index:20}
+.sheet{background:var(--surface);border-radius:14px;width:100%;max-width:680px;padding:18px;display:grid;gap:14px;min-width:0}
+.sheet ul,.sheet ol{margin:0;padding-left:1.3rem;display:grid;gap:4px}
+.starpick button{border:0;background:none;font-size:1.7rem;color:var(--star);padding:0 2px;line-height:1}
+.cmt{border-top:1px solid var(--line);padding-top:8px}
+.toast{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;opacity:0;pointer-events:none;transition:.2s;max-width:calc(100% - 32px);z-index:30}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.toast.bad{background:var(--bad);color:#fff}
+.empty{color:var(--muted);padding:24px 0}
+svg text{fill:var(--muted);font-size:11px;font-family:var(--font-body)}
+svg .bar-m{fill:var(--accent)}
+svg .grid-l{stroke:var(--line)}
+.prev{max-width:240px;border-radius:10px;display:block;margin-top:8px}
+</style>
+<div class="wrap"><div id="app"></div></div>
+<div id="modal" class="modal" hidden></div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<noscript>RecipeHub needs JavaScript enabled.</noscript>
+<script>
+(function(){
+"use strict";
+var KEY="recipehub.v2",DAY=864e5,CATS=["Breakfast","Lunch","Dinner","Snacks","Dessert","Drinks"];
+var mem=null,serverMode=false,S;
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
+function rid(){return "x"+Math.random().toString(36).slice(2,9)}
+function now(){return Date.now()}
+function ago(ts){var m=Math.floor((now()-ts)/6e4);if(m<1)return "just now";if(m<60)return m+" min ago";var h=Math.floor(m/60);if(h<24)return h+" h ago";return Math.floor(h/24)+" d ago"}
+function seed(){
+  var t=now();
+  var users=[
+    {id:"u1",name:"Meera Nair",email:"meera@recipehub.app",role:"admin",joined:t-30*DAY},
+    {id:"u2",name:"Arifah",email:"arifah@example.com",role:"user",joined:t-21*DAY},
+    {id:"u3",name:"Manshi",email:"manshi@example.com",role:"user",joined:t-18*DAY},
+    {id:"u4",name:"Ishika",email:"ishika@example.com",role:"user",joined:t-12*DAY},
+    {id:"u5",name:"Shreya",email:"shreya@example.com",role:"user",joined:t-9*DAY}];
+  function R(id,title,cat,au,st,d,ing,steps,rt,cm){return{id:id,title:title,category:cat,authorId:au,status:st,created:t-d*DAY-id.length*3e5,photo:null,ingredients:ing,instructions:steps,ratings:rt,comments:cm}}
+  var recipes=[
+    R("r1","Masala Dosa with Coconut Chutney","Breakfast","u3","approved",6,["1 cup dosa batter","2 boiled potatoes","1 onion, sliced","1 tsp mustard seeds","Curry leaves","Fresh coconut and green chilli for chutney"],["Saute mustard seeds, curry leaves and onion; add mashed potato and salt.","Spread batter thin on a hot tawa and drizzle oil.","Cook until crisp, fill with potato masala and fold.","Blend coconut, chilli and salt into a chutney and serve."],[{u:"u2",v:5},{u:"u4",v:5},{u:"u5",v:4}],[{u:"u2",t:"Crisp edges came out perfect.",ts:t-5*DAY}]),
+    R("r2","Paneer Butter Masala","Dinner","u2","approved",5,["250 g paneer","4 tomatoes","2 tbsp butter","1 tbsp cashew paste","1 tsp kasuri methi","Cream, garam masala"],["Boil and blend tomatoes into a smooth puree.","Simmer puree with butter, cashew paste and spices for 10 minutes.","Add paneer cubes, cream and kasuri methi.","Rest for 5 minutes and serve with naan."],[{u:"u3",v:5},{u:"u5",v:4},{u:"u4",v:4}],[{u:"u3",t:"Rich and creamy, less cream works too.",ts:t-4*DAY}]),
+    R("r3","Hyderabadi Veg Biryani","Lunch","u5","approved",4,["2 cups basmati rice","Mixed vegetables","Fried onions","Yogurt","Mint and coriander","Biryani masala, saffron milk"],["Parboil rice with whole spices to 70 percent done.","Marinate vegetables in yogurt and masala.","Layer vegetables, rice, fried onions, herbs and saffron milk.","Seal the pot and cook on low heat for 25 minutes."],[{u:"u2",v:5},{u:"u3",v:5}],[]),
+    R("r4","Masala Chai","Drinks","u4","approved",3,["2 cups water","1 cup milk","2 tsp tea leaves","1 inch ginger","2 cardamom pods","Sugar to taste"],["Boil water with crushed ginger and cardamom.","Add tea leaves and simmer for 2 minutes.","Pour in milk and bring to a rolling boil.","Strain and serve hot."],[{u:"u2",v:4},{u:"u3",v:4}],[{u:"u5",t:"My morning default now.",ts:t-2*DAY}]),
+    R("r5","Gulab Jamun","Dessert","u3","approved",2,["1 cup milk powder","1/4 cup flour","Milk to knead","2 cups sugar","Cardamom and rose water","Oil or ghee for frying"],["Knead milk powder, flour and milk into a soft dough.","Shape into smooth crack-free balls.","Fry slowly on low heat until deep golden.","Soak in warm cardamom sugar syrup for 2 hours."],[{u:"u4",v:5},{u:"u5",v:5},{u:"u2",v:4}],[]),
+    R("r6","Vegetable Poha","Breakfast","u2","approved",1,["2 cups flattened rice","1 onion","1 potato, diced","Peanuts","Turmeric, mustard seeds","Lemon and coriander"],["Rinse poha and let it rest 5 minutes.","Temper mustard seeds, peanuts, onion and potato.","Add turmeric, salt and poha; steam for 3 minutes.","Finish with lemon juice and coriander."],[{u:"u3",v:4}],[]),
+    R("r7","Pav Bhaji","Snacks","u4","pending",0,["4 potatoes","1 cup cauliflower","1 cup peas","3 tomatoes","Pav bhaji masala","Butter and pav buns"],["Boil and mash the vegetables.","Cook tomatoes with masala in butter.","Add mash and simmer, pressing as it thickens.","Toast pav in butter and serve with onions and lemon."],[],[]),
+    R("r8","Mango Lassi","Drinks","u5","pending",0,["1 ripe mango","1 cup yogurt","1/2 cup cold milk","2 tbsp sugar","Pinch of cardamom"],["Peel and chop the mango.","Blend everything until smooth.","Serve over ice."],[],[])];
+  var act=[
+    {ts:t-2*DAY,text:"Shreya shared Hyderabadi Veg Biryani"},
+    {ts:t-26*36e5,text:"Manshi rated Paneer Butter Masala 5 stars"},
+    {ts:t-5*36e5,text:"Arifah commented on Masala Chai"},
+    {ts:t-36e5,text:"Ishika shared Pav Bhaji"},
+    {ts:t-20*6e4,text:"Shreya shared Mango Lassi"}].reverse();
+  return{settings:{siteName:"RecipeHub",requireApproval:true,allowComments:true,allowRatings:true},users:users,recipes:recipes,activity:act}
+}
+function load(){try{var s=localStorage.getItem(KEY);if(s){var o=JSON.parse(s);if(o&&o.users)return o}}catch(e){}return mem||seed()}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){mem=S}
+  if(serverMode){try{fetch("api/state",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(S)}).catch(function(){})}catch(e){}}}
+S=load();
+var ui={role:"user",uid:"u2",tab:"discover",atab:"dashboard",q:"",cat:"All",sort:"rated",rfilter:"All",confirm:null,modal:null,draft:blank(),err:""};
+function blank(){return{editId:null,title:"",category:"Dinner",ingredients:"",instructions:"",photo:null}}
+function userById(id){return S.users.filter(function(u){return u.id===id})[0]}
+function uname(id){var u=userById(id);return u?u.name:"Deleted user"}
+function recipeById(id){return S.recipes.filter(function(r){return r.id===id})[0]}
+function avg(r){if(!r.ratings.length)return 0;return r.ratings.reduce(function(a,b){return a+b.v},0)/r.ratings.length}
+function stars(v){var s="";for(var i=1;i<=5;i++)s+=i<=Math.round(v)?"★":"☆";return '<span class="stars" aria-label="'+v.toFixed(1)+' out of 5">'+s+'</span>'}
+function log(text){S.activity.unshift({ts:now(),text:text});S.activity=S.activity.slice(0,50);save()}
+function toast(msg,kind){var t=document.getElementById("toast");t.textContent=msg;t.className="toast show "+(kind||"");clearTimeout(toast.h);toast.h=setTimeout(function(){t.className="toast"},3200)}
+function normaliseSession(){
+  var cur=userById(ui.uid);
+  if(ui.role==="admin"){var a=S.users.filter(function(u){return u.role==="admin"});ui.uid=a.length?a[0].id:null}
+  else if(!cur||cur.role==="admin"){var n=S.users.filter(function(u){return u.role!=="admin"});ui.uid=n.length?n[0].id:null}
+}
+function hue(s){var h=0;for(var i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))%360;return h}
+function ph(r){return '<div class="ph" style="background:linear-gradient(135deg,hsl('+hue(r.title)+' 45% 38%),hsl('+((hue(r.title)+50)%360)+' 50% 30%))" aria-hidden="true">'+esc(r.title.charAt(0))+'</div>'}
+function pic(r){return r.photo?'<img class="photo" alt="'+esc(r.title)+'" src="'+esc(r.photo)+'">':ph(r)}
+
+/* ---------- views ---------- */
+function header(){
+  var who="";
+  if(ui.role==="user"){
+    var opts=S.users.filter(function(u){return u.role!=="admin"}).map(function(u){return '<option value="'+u.id+'"'+(u.id===ui.uid?" selected":"")+'>'+esc(u.name)+'</option>'}).join("");
+    who='<label for="uidsel" style="margin:0">Signed in as</label><select id="uidsel">'+opts+'</select>';
+  }else{who='<span class="meta">Signed in as '+esc(uname(ui.uid))+'</span>'}
+  return '<header class="top"><div class="brand">'+esc(S.settings.siteName)+'<span>.</span></div><div class="who">'+who+
+    '<div class="seg" role="group" aria-label="Role"><button data-act="role" data-id="user" aria-pressed="'+(ui.role==="user")+'">User</button><button data-act="role" data-id="admin" aria-pressed="'+(ui.role==="admin")+'">Admin</button></div></div></header>'
+}
+function tabsHTML(list,cur,act){return '<nav class="tabs" role="tablist">'+list.map(function(t){return '<button role="tab" data-act="'+act+'" data-id="'+t[0]+'" aria-selected="'+(cur===t[0])+'">'+t[1]+'</button>'}).join("")+'</nav>'}
+function cardHTML(r,extra){
+  var n=r.ratings.length;
+  return '<button class="card" data-act="open" data-id="'+r.id+'">'+pic(r)+'<span class="body"><strong>'+esc(r.title)+'</strong><span class="meta">'+esc(uname(r.authorId))+' · '+esc(r.category)+'</span><span>'+(n?stars(avg(r))+' <span class="meta">'+avg(r).toFixed(1)+' ('+n+')</span>':'<span class="meta">No ratings yet</span>')+'</span>'+(extra||"")+'</span></button>'
+}
+function gridHTML(){
+  var q=ui.q.trim().toLowerCase();
+  var list=S.recipes.filter(function(r){
+    if(r.status!=="approved")return false;
+    if(ui.cat!=="All"&&r.category!==ui.cat)return false;
+    if(!q)return true;
+    return (r.title+" "+r.ingredients.join(" ")+" "+uname(r.authorId)).toLowerCase().indexOf(q)>-1
+  });
+  list.sort(function(a,b){
+    if(ui.sort==="newest")return b.created-a.created;
+    if(ui.sort==="discussed")return b.comments.length-a.comments.length;
+    return avg(b)-avg(a)||b.ratings.length-a.ratings.length
+  });
+  if(!list.length)return '<p class="empty">No recipes match your search. Try another word or category.</p>';
+  return '<div class="grid">'+list.map(function(r){return cardHTML(r)}).join("")+'</div>'
+}
+function discoverView(){
+  var chips=["All"].concat(CATS).map(function(c){return '<button class="chip" data-act="cat" data-id="'+c+'" aria-pressed="'+(ui.cat===c)+'">'+c+'</button>'}).join("");
+  return '<div class="bar"><div class="grow"><label for="q" class="hint" style="margin:0 0 4px">Search by dish, ingredient or cook</label><input id="q" type="text" value="'+esc(ui.q)+'" placeholder="e.g. paneer, chai, Manshi" autocomplete="off"></div>'+
+    '<div><label for="sort" class="hint" style="margin:0 0 4px">Sort by</label><select id="sort"><option value="rated"'+(ui.sort==="rated"?" selected":"")+'>Top rated</option><option value="newest"'+(ui.sort==="newest"?" selected":"")+'>Newest</option><option value="discussed"'+(ui.sort==="discussed"?" selected":"")+'>Most commented</option></select></div></div>'+
+    '<div class="chips" style="margin-bottom:16px">'+chips+'</div><div id="grid">'+gridHTML()+'</div>'
+}
+function shareView(){
+  var d=ui.draft;
+  var opts=CATS.map(function(c){return '<option'+(d.category===c?" selected":"")+'>'+c+'</option>'}).join("");
+  var note=S.settings.requireApproval?"New recipes are reviewed by an admin before they appear in Discover.":"New recipes are published right away.";
+  return '<h2>'+(d.editId?"Edit recipe":"Share a recipe")+'</h2><p class="meta">'+note+'</p><form id="shareForm" class="form" style="margin-top:14px" novalidate>'+
+    '<div><label for="d-title">Title</label><input id="d-title" type="text" value="'+esc(d.title)+'" maxlength="80"></div>'+
+    '<div><label for="d-category">Category</label><select id="d-category">'+opts+'</select></div>'+
+    '<div><label for="d-ingredients">Ingredients</label><textarea id="d-ingredients">'+esc(d.ingredients)+'</textarea><div class="hint">One ingredient per line.</div></div>'+
+    '<div><label for="d-instructions">Instructions</label><textarea id="d-instructions">'+esc(d.instructions)+'</textarea><div class="hint">One step per line.</div></div>'+
+    '<div><label for="d-photo">Photo (optional)</label><input id="d-photo" type="file" accept="image/*"><div id="prev">'+(d.photo?'<img class="prev" alt="Selected photo preview" src="'+esc(d.photo)+'">':"")+'</div></div>'+
+    '<div class="err" id="ferr">'+esc(ui.err)+'</div>'+
+    '<div class="row"><button class="btn primary" type="submit">'+(d.editId?"Save changes":"Share recipe")+'</button>'+(d.editId?'<button class="btn" type="button" data-act="cancel-edit">Cancel</button>':"")+'</div></form>'
+}
+function mineView(){
+  var mine=S.recipes.filter(function(r){return r.authorId===ui.uid});
+  if(!mine.length)return '<h2>My recipes</h2><p class="empty">You have not shared a recipe yet. Use the Share a recipe tab to add your first one.</p>';
+  return '<h2 style="margin-bottom:14px">My recipes</h2><div class="grid">'+mine.map(function(r){
+    var del=ui.confirm==="del-"+r.id;
+    return '<div class="card">'+pic(r)+'<div class="body"><strong>'+esc(r.title)+'</strong><span class="meta">'+esc(r.category)+'</span><span><span class="pill '+r.status+'">'+r.status+'</span></span>'+
+      '<div class="row" style="margin-top:8px"><button class="btn sm" data-act="open" data-id="'+r.id+'">View</button><button class="btn sm" data-act="edit" data-id="'+r.id+'">Edit</button><button class="btn sm danger" data-act="del-mine" data-id="'+r.id+'">'+(del?"Confirm delete":"Delete")+'</button></div></div></div>'
+  }).join("")+'</div>'
+}
+function weekData(){
+  var out=[],d0=new Date();d0.setHours(0,0,0,0);
+  for(var i=6;i>=0;i--){var s=d0.getTime()-i*DAY,e=s+DAY;
+    var c=S.recipes.filter(function(r){return r.created>=s&&r.created<e}).length;
+    out.push({l:new Date(s).toLocaleDateString(undefined,{weekday:"short"}),v:c})}
+  return out
+}
+function barChart(data,title){
+  var W=420,H=190,L=28,B=26,T=14,max=Math.max(2,Math.max.apply(null,data.map(function(d){return d.v})));
+  max=Math.ceil(max/2)*2;
+  var bw=(W-L-8)/data.length,svg='<svg viewBox="0 0 '+W+' '+H+'" width="100%" role="img" aria-label="'+esc(title)+'">';
+  for(var g=0;g<=4;g++){var v=max/4*g,y=T+(H-T-B)*(1-v/max);svg+='<line class="grid-l" x1="'+L+'" x2="'+W+'" y1="'+y+'" y2="'+y+'"/><text x="'+(L-6)+'" y="'+(y+4)+'" text-anchor="end">'+(Math.round(v*10)/10)+'</text>'}
+  data.forEach(function(d,i){var h=(H-T-B)*d.v/max,x=L+i*bw+bw*.18,w=bw*.64;
+    svg+='<rect class="bar-m" x="'+x+'" y="'+(H-B-h)+'" width="'+w+'" height="'+h+'" rx="3"/><text x="'+(x+w/2)+'" y="'+(H-8)+'" text-anchor="middle">'+esc(d.l)+'</text>'+(d.v?'<text x="'+(x+w/2)+'" y="'+(H-B-h-4)+'" text-anchor="middle" style="fill:var(--ink)">'+d.v+'</text>':"")});
+  return svg+'</svg>'
+}
+function dashView(){
+  var all=[].concat.apply([],S.recipes.map(function(r){return r.ratings}));
+  var avgAll=all.length?(all.reduce(function(a,b){return a+b.v},0)/all.length).toFixed(1):"0.0";
+  var cm=S.recipes.reduce(function(a,r){return a+r.comments.length},0);
+  var pend=S.recipes.filter(function(r){return r.status==="pending"}).length;
+  var dist=[1,2,3,4,5].map(function(n){return{l:n+"★",v:all.filter(function(x){return x.v===n}).length}});
+  var top=S.recipes.filter(function(r){return r.status==="approved"}).sort(function(a,b){return avg(b)-avg(a)||b.ratings.length-a.ratings.length}).slice(0,5);
+  return '<div class="stats"><div class="stat"><b>'+S.users.length+'</b><span>Users</span></div><div class="stat"><b>'+S.recipes.length+'</b><span>Recipes</span></div><div class="stat"><b>'+pend+'</b><span>Awaiting approval</span></div><div class="stat"><b>'+avgAll+'</b><span>Average rating</span></div><div class="stat"><b>'+cm+'</b><span>Comments</span></div></div>'+
+    '<div class="cols"><div class="panel"><h3 style="margin-bottom:8px">Recipes submitted, last 7 days</h3>'+barChart(weekData(),"Recipes submitted per day")+'</div>'+
+    '<div class="panel"><h3 style="margin-bottom:8px">Rating distribution</h3>'+barChart(dist,"Number of ratings by star value")+'</div>'+
+    '<div class="panel"><h3 style="margin-bottom:8px">Top recipes</h3><div class="scroll"><table style="min-width:360px"><thead><tr><th>Recipe</th><th>Rating</th><th>Votes</th><th>Comments</th></tr></thead><tbody>'+
+    top.map(function(r){return '<tr><td>'+esc(r.title)+'</td><td>'+avg(r).toFixed(1)+'</td><td>'+r.ratings.length+'</td><td>'+r.comments.length+'</td></tr>'}).join("")+'</tbody></table></div></div>'+
+    '<div class="panel"><div class="row between" style="margin-bottom:6px"><h3>User activity</h3><span class="live"><i></i>Live</span></div><ul class="feed" id="feed">'+feedHTML()+'</ul></div></div>'
+}
+function feedHTML(){return S.activity.slice(0,10).map(function(a){return '<li><span>'+esc(a.text)+'</span><time>'+ago(a.ts)+'</time></li>'}).join("")||'<li class="empty">No activity yet.</li>'}
+function usersView(){
+  return '<div class="row between" style="margin-bottom:12px"><h2>User management</h2><button class="btn primary" data-act="user-new">Add user</button></div><div class="panel scroll"><table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Recipes</th><th>Joined</th><th>Actions</th></tr></thead><tbody>'+
+    S.users.map(function(u){
+      var n=S.recipes.filter(function(r){return r.authorId===u.id}).length,del=ui.confirm==="du-"+u.id;
+      return '<tr><td>'+esc(u.name)+'</td><td>'+esc(u.email)+'</td><td><span class="pill '+u.role+'">'+u.role+'</span></td><td>'+n+'</td><td>'+new Date(u.joined).toLocaleDateString()+'</td><td class="act"><button class="btn sm" data-act="user-edit" data-id="'+u.id+'">Edit</button><button class="btn sm danger" data-act="user-del" data-id="'+u.id+'">'+(del?"Confirm delete":"Delete")+'</button></td></tr>'
+    }).join("")+'</tbody></table></div>'
+}
+function recipesAdminView(){
+  var f=["All","pending","approved","rejected"];
+  var chips=f.map(function(c){return '<button class="chip" data-act="rfilter" data-id="'+c+'" aria-pressed="'+(ui.rfilter===c)+'">'+(c==="All"?"All":c.charAt(0).toUpperCase()+c.slice(1))+'</button>'}).join("");
+  var list=S.recipes.filter(function(r){return ui.rfilter==="All"||r.status===ui.rfilter}).sort(function(a,b){return b.created-a.created});
+  return '<h2 style="margin-bottom:12px">Recipe management</h2><div class="chips" style="margin-bottom:12px">'+chips+'</div><div class="panel scroll"><table><thead><tr><th>Recipe</th><th>Author</th><th>Category</th><th>Submitted</th><th>Status</th><th>Actions</th></tr></thead><tbody>'+
+    (list.length?list.map(function(r){
+      var del=ui.confirm==="dr-"+r.id;
+      return '<tr><td><button class="btn sm" data-act="open" data-id="'+r.id+'">'+esc(r.title)+'</button></td><td>'+esc(uname(r.authorId))+'</td><td>'+esc(r.category)+'</td><td>'+ago(r.created)+'</td><td><span class="pill '+r.status+'">'+r.status+'</span></td><td class="act">'+
+        (r.status!=="approved"?'<button class="btn sm" data-act="approve" data-id="'+r.id+'">Approve</button>':"")+(r.status!=="rejected"?'<button class="btn sm" data-act="reject" data-id="'+r.id+'">Reject</button>':"")+'<button class="btn sm danger" data-act="del-recipe" data-id="'+r.id+'">'+(del?"Confirm delete":"Delete")+'</button></td></tr>'
+    }).join(""):'<tr><td colspan="6" class="empty">No recipes in this view.</td></tr>')+'</tbody></table></div>'
+}
+function settingsView(){
+  var s=S.settings;
+  function ck(id,label,on,hint){return '<div class="check"><input type="checkbox" id="'+id+'"'+(on?" checked":"")+'><div><label for="'+id+'">'+label+'</label><div class="hint">'+hint+'</div></div></div>'}
+  return '<h2 style="margin-bottom:12px">System settings</h2><form id="setForm" class="form panel" novalidate><div><label for="s-name">Site name</label><input id="s-name" type="text" maxlength="30" value="'+esc(s.siteName)+'"></div>'+
+    ck("s-appr","Require approval for new recipes",s.requireApproval,"When on, shared recipes stay pending until an admin approves them.")+
+    ck("s-rate","Allow ratings",s.allowRatings,"Users can rate approved recipes from 1 to 5 stars.")+
+    ck("s-cmt","Allow comments",s.allowComments,"Users can comment on approved recipes.")+
+    '<div class="err" id="serr"></div><div><button class="btn primary" type="submit">Save settings</button></div></form>'
+}
+function view(){
+  if(ui.role==="user"){
+    return tabsHTML([["discover","Discover"],["share","Share a recipe"],["mine","My recipes"]],ui.tab,"tab")+'<main>'+(ui.tab==="share"?shareView():ui.tab==="mine"?mineView():discoverView())+'</main>'
+  }
+  return tabsHTML([["dashboard","Dashboard"],["users","Users"],["recipes","Recipes"],["settings","Settings"]],ui.atab,"atab")+'<main>'+(ui.atab==="users"?usersView():ui.atab==="recipes"?recipesAdminView():ui.atab==="settings"?settingsView():dashView())+'</main>'
+}
+function render(){normaliseSession();document.getElementById("app").innerHTML=header()+view();if(ui.modal&&ui.modal.type==="recipe")drawModal()}
+
+/* ---------- modal ---------- */
+function drawModal(){
+  var m=document.getElementById("modal"),h="";
+  if(!ui.modal){m.hidden=true;m.innerHTML="";return}
+  if(ui.modal.type==="recipe"){
+    var r=recipeById(ui.modal.id);if(!r){closeModal();return}
+    var mine=ui.role==="user"&&ui.uid,my=r.ratings.filter(function(x){return x.u===ui.uid})[0],canInteract=ui.role==="user"&&r.status==="approved";
+    var pick="";
+    if(S.settings.allowRatings&&canInteract){pick='<div><label>Your rating</label><div class="starpick">'+[1,2,3,4,5].map(function(i){return '<button data-act="rate" data-id="'+i+'" aria-label="Rate '+i+' stars">'+(my&&i<=my.v?"★":"☆")+'</button>'}).join("")+'</div></div>'}
+    var cf="";
+    if(S.settings.allowComments&&canInteract){cf='<form id="cmtForm" class="form" novalidate><div><label for="ctext">Add a comment</label><textarea id="ctext" style="min-height:70px" maxlength="400"></textarea></div><div><button class="btn primary" type="submit">Post comment</button></div></form>'}
+    else if(ui.role==="admin"){cf='<p class="hint">Switch to a user to rate or comment.</p>'}
+    var n=r.ratings.length;
+    h='<div class="sheet" role="dialog" aria-modal="true" aria-label="'+esc(r.title)+'">'+
+      '<div class="row between"><h2>'+esc(r.title)+'</h2><button class="btn sm" data-act="close" id="mclose">Close</button></div>'+pic(r)+
+      '<div class="meta">By '+esc(uname(r.authorId))+' · '+esc(r.category)+' · <span class="pill '+r.status+'">'+r.status+'</span></div>'+
+      '<div>'+(n?stars(avg(r))+' <span class="meta">'+avg(r).toFixed(1)+' from '+n+' rating'+(n>1?"s":"")+'</span>':'<span class="meta">No ratings yet</span>')+'</div>'+
+      '<div><h3>Ingredients</h3><ul>'+r.ingredients.map(function(i){return '<li>'+esc(i)+'</li>'}).join("")+'</ul></div>'+
+      '<div><h3>Method</h3><ol>'+r.instructions.map(function(i){return '<li>'+esc(i)+'</li>'}).join("")+'</ol></div>'+pick+
+      '<div><h3>Comments ('+r.comments.length+')</h3>'+(r.comments.length?r.comments.map(function(c){return '<div class="cmt"><strong>'+esc(uname(c.u))+'</strong> <span class="meta">'+ago(c.ts)+'</span><div>'+esc(c.t)+'</div></div>'}).join(""):'<p class="meta">No comments yet.</p>')+'</div>'+cf+'</div>';
+  }else if(ui.modal.type==="user"){
+    var u=ui.modal.id?userById(ui.modal.id):null;
+    h='<div class="sheet" role="dialog" aria-modal="true" aria-label="User details"><div class="row between"><h2>'+(u?"Edit user":"Add user")+'</h2><button class="btn sm" data-act="close" id="mclose">Close</button></div>'+
+      '<form id="userForm" class="form" novalidate><div><label for="u-name">Name</label><input id="u-name" type="text" value="'+esc(u?u.name:"")+'" maxlength="60"></div><div><label for="u-email">Email</label><input id="u-email" type="email" value="'+esc(u?u.email:"")+'"></div>'+
+      '<div><label for="u-role">Role</label><select id="u-role"><option value="user"'+(u&&u.role==="user"?" selected":"")+'>User</option><option value="admin"'+(u&&u.role==="admin"?" selected":"")+'>Admin</option></select></div><div class="err" id="uerr"></div><div><button class="btn primary" type="submit">'+(u?"Save user":"Create user")+'</button></div></form></div>';
+  }
+  m.innerHTML=h;m.hidden=false;
+  if(!drawModal.focused){var c=document.getElementById("mclose");if(c)c.focus();drawModal.focused=true}
+}
+function openModal(o){ui.modal=o;drawModal.focused=false;drawModal()}
+function closeModal(){ui.modal=null;drawModal.focused=false;drawModal()}
+
+/* ---------- actions ---------- */
+function resizeImg(file,cb){var fr=new FileReader();fr.onload=function(){var im=new Image();im.onload=function(){var sc=Math.min(1,640/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=Math.round(im.width*sc);c.height=Math.round(im.height*sc);c.getContext("2d").drawImage(im,0,0,c.width,c.height);cb(c.toDataURL("image/jpeg",.72))};im.onerror=function(){cb(null)};im.src=fr.result};fr.onerror=function(){cb(null)};fr.readAsDataURL(file)}
+function lines(s){return s.split(/\r?\n/).map(function(x){return x.trim()}).filter(Boolean)}
+function setStatus(id,st){
+  var r=recipeById(id);if(!r)return;r.status=st;
+  log("Admin "+st+" "+r.title);toast("“"+r.title+"” "+st+".");render()
+}
+var actions={
+  role:function(id){ui.role=id;ui.confirm=null;closeModal();render()},
+  tab:function(id){ui.tab=id;ui.confirm=null;ui.err="";render()},
+  atab:function(id){ui.atab=id;ui.confirm=null;render()},
+  cat:function(id){ui.cat=id;render()},
+  rfilter:function(id){ui.rfilter=id;ui.confirm=null;render()},
+  open:function(id){openModal({type:"recipe",id:id})},
+  close:function(){closeModal()},
+  approve:function(id){setStatus(id,"approved")},
+  reject:function(id){setStatus(id,"rejected")},
+  "del-recipe":function(id){
+    if(ui.confirm!=="dr-"+id){ui.confirm="dr-"+id;render();return}
+    var r=recipeById(id);S.recipes=S.recipes.filter(function(x){return x.id!==id});ui.confirm=null;log("Admin deleted "+r.title);toast("Recipe deleted.");render()},
+  "del-mine":function(id){
+    if(ui.confirm!=="del-"+id){ui.confirm="del-"+id;render();return}
+    var r=recipeById(id);S.recipes=S.recipes.filter(function(x){return x.id!==id});ui.confirm=null;log(uname(ui.uid)+" deleted "+r.title);toast("Recipe deleted.");render()},
+  edit:function(id){var r=recipeById(id);if(!r)return;ui.draft={editId:id,title:r.title,category:r.category,ingredients:r.ingredients.join("\n"),instructions:r.instructions.join("\n"),photo:r.photo};ui.tab="share";ui.err="";render()},
+  "cancel-edit":function(){ui.draft=blank();ui.tab="mine";render()},
+  "user-new":function(){openModal({type:"user",id:null})},
+  "user-edit":function(id){openModal({type:"user",id:id})},
+  "user-del":function(id){
+    var u=userById(id);
+    if(u.role==="admin"&&S.users.filter(function(x){return x.role==="admin"}).length<2){toast("At least one admin is required.","bad");return}
+    if(ui.confirm!=="du-"+id){ui.confirm="du-"+id;render();return}
+    S.users=S.users.filter(function(x){return x.id!==id});S.recipes=S.recipes.filter(function(r){return r.authorId!==id});ui.confirm=null;
+    log("Admin removed user "+u.name);toast("User "+u.name+" deleted.");render()},
+  rate:function(id){
+    var r=recipeById(ui.modal.id),v=+id;if(!r||!ui.uid)return;
+    var my=r.ratings.filter(function(x){return x.u===ui.uid})[0];
+    if(my)my.v=v;else r.ratings.push({u:ui.uid,v:v});
+    log(uname(ui.uid)+" rated "+r.title+" "+v+" star"+(v>1?"s":""));toast("Thanks, your rating is saved.");render()}
+};
+document.addEventListener("click",function(e){
+  var b=e.target.closest("[data-act]");
+  if(b&&actions[b.dataset.act]){actions[b.dataset.act](b.dataset.id);return}
+  if(e.target.id==="modal")closeModal()
+});
+document.addEventListener("keydown",function(e){if(e.key==="Escape"&&ui.modal)closeModal()});
+document.addEventListener("input",function(e){
+  var id=e.target.id;
+  if(id==="q"){ui.q=e.target.value;document.getElementById("grid").innerHTML=gridHTML()}
+  else if(id&&id.indexOf("d-")===0&&id!=="d-photo"){ui.draft[id.slice(2)]=e.target.value}
+});
+document.addEventListener("change",function(e){
+  var id=e.target.id;
+  if(id==="uidsel"){ui.uid=e.target.value;render()}
+  else if(id==="sort"){ui.sort=e.target.value;document.getElementById("grid").innerHTML=gridHTML()}
+  else if(id==="d-category"){ui.draft.category=e.target.value}
+  else if(id==="d-photo"&&e.target.files&&e.target.files[0]){
+    resizeImg(e.target.files[0],function(url){
+      if(!url){toast("That file could not be read as an image.","bad");return}
+      ui.draft.photo=url;document.getElementById("prev").innerHTML='<img class="prev" alt="Selected photo preview" src="'+url+'">'})}
+});
+document.addEventListener("submit",function(e){
+  e.preventDefault();var id=e.target.id;
+  if(id==="shareForm"){
+    var d=ui.draft,ing=lines(d.ingredients),st=lines(d.instructions);
+    if(!d.title.trim()||ing.length<1||st.length<1){ui.err="Add a title, at least one ingredient and at least one step.";document.getElementById("ferr").textContent=ui.err;return}
+    ui.err="";
+    var status=S.settings.requireApproval?"pending":"approved";
+    if(d.editId){
+      var r=recipeById(d.editId);r.title=d.title.trim();r.category=d.category;r.ingredients=ing;r.instructions=st;r.photo=d.photo;
+      if(S.settings.requireApproval)r.status="pending";
+      log(uname(ui.uid)+" updated "+r.title);toast("Recipe updated."+(r.status==="pending"?" It is awaiting admin approval.":""));
+    }else{
+      var nr={id:rid(),title:d.title.trim(),category:d.category,authorId:ui.uid,status:status,created:now(),photo:d.photo,ingredients:ing,instructions:st,ratings:[],comments:[]};
+      S.recipes.push(nr);log(uname(ui.uid)+" shared "+nr.title);
+      toast(status==="pending"?"Recipe shared. It is awaiting admin approval.":"Recipe shared and published.");
+    }
+    ui.draft=blank();ui.tab="mine";render();
+  }else if(id==="cmtForm"){
+    var t=document.getElementById("ctext").value.trim(),r2=recipeById(ui.modal.id);
+    if(!t){toast("Write a comment first.","bad");return}
+    r2.comments.push({u:ui.uid,t:t,ts:now()});log(uname(ui.uid)+" commented on "+r2.title);toast("Comment posted.");render()
+  }else if(id==="userForm"){
+    var nm=document.getElementById("u-name").value.trim(),em=document.getElementById("u-email").value.trim(),ro=document.getElementById("u-role").value,er=document.getElementById("uerr"),eid=ui.modal.id;
+    if(!nm){er.textContent="Enter a name.";return}
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)){er.textContent="Enter a valid email address.";return}
+    if(S.users.some(function(u){return u.email.toLowerCase()===em.toLowerCase()&&u.id!==eid})){er.textContent="That email is already in use.";return}
+    if(eid){var u=userById(eid);
+      if(u.role==="admin"&&ro!=="admin"&&S.users.filter(function(x){return x.role==="admin"}).length<2){er.textContent="At least one admin is required.";return}
+      u.name=nm;u.email=em;u.role=ro;log("Admin updated user "+nm);toast("User "+nm+" updated.")}
+    else{S.users.push({id:rid(),name:nm,email:em,role:ro,joined:now()});log("Admin created user "+nm);toast("User "+nm+" created.")}
+    closeModal();render()
+  }else if(id==="setForm"){
+    var sn=document.getElementById("s-name").value.trim();
+    if(!sn){document.getElementById("serr").textContent="Site name cannot be empty.";return}
+    S.settings={siteName:sn,requireApproval:document.getElementById("s-appr").checked,allowRatings:document.getElementById("s-rate").checked,allowComments:document.getElementById("s-cmt").checked};
+    log("Admin updated system settings");toast("Settings updated.");render()
+  }
+});
+/* live updates from other tabs, and a ticking activity feed */
+window.addEventListener("storage",function(e){
+  if(e.key!==KEY)return;S=load();
+  var a=document.activeElement,typing=a&&(a.tagName==="INPUT"||a.tagName==="TEXTAREA"||a.tagName==="SELECT");
+  if(!ui.modal&&!typing)render()
+});
+setInterval(function(){var f=document.getElementById("feed");if(f)f.innerHTML=feedHTML()},30000);
+render();
+/* optional: when served by the Java server, load and save shared state through its API */
+try{fetch("api/state").then(function(r){return r.ok?r.json():null}).then(function(s){if(s===null)return;serverMode=true;if(s.users&&s.recipes){S=s;try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}render()}else{save()}}).catch(function(){})}catch(e){}
+})();
+</script>
